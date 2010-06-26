@@ -54,7 +54,9 @@ module LoveZkn
         access_token.params[:oauth_token_secret] = oauth_token_secret
         access_token.params["oauth_token_secret"] = oauth_token_secret
       end
+      @user_id = user_id
       @client = OAuthRubytter.new(access_token)
     end
+    attr_reader :user_id
   end
 end

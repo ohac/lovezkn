@@ -12,8 +12,66 @@ self_file =
 $:.unshift(File.dirname(self_file) + "/../lib")
 
 require 'lovezkn'
+require 'choice'
+
+Choice.options do
+  option :followers do
+    short '-f'
+  end
+  option :limit do
+    short '-l'
+  end
+  option :myid do
+    short '-i'
+  end
+  option :public do
+    short '-p'
+  end
+  option :replies do
+    short '-r'
+  end
+end
+
+def timeline_to_textlines(tl)
+  tl.map do |tweet|
+    re = tweet.in_reply_to_status_id
+    [
+      [
+        tweet.user.screen_name,
+        tweet.user.verified ? '&' : nil,
+        tweet.user.protected ? '*' : nil,
+      ].compact.join,
+      tweet.text,
+      re ? "in reply to #{re}" : nil,
+    ].compact.join(' ')
+  end
+end
+
 client = LoveZkn::Client.new
+c = Choice.choices
 rawclient = client.login
-rawclient.update(ARGV[0]) unless ARGV[0].nil?
-limit = rawclient.limit_status
-p limit.remaining_hits
+if c.myid
+  puts client.user_id
+elsif c.followers
+  id = c.followers
+  id = client.user_id if id == true
+  cursor = -1
+  while cursor != 0
+    followers = rawclient.followers_ids(id, :cursor => cursor)
+    cursor = followers.next_cursor
+    followers.ids.each do |id|
+      puts id
+    end
+  end
+elsif c.limit
+  limit = rawclient.limit_status
+  puts limit.remaining_hits
+elsif c.replies
+  puts timeline_to_textlines(rawclient.replies).join("\n\n")
+elsif c.public
+  puts timeline_to_textlines(rawclient.public_timeline).join("\n\n")
+elsif ARGV[0].nil?
+  puts timeline_to_textlines(rawclient.home_timeline).join("\n\n")
+else
+  rawclient.update(ARGV[0])
+end
