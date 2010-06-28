@@ -4,15 +4,22 @@ module LoveZkn
   CONFIG = Pit.get('twitter_api')
   APIKEY = CONFIG['apikey']
   SECRET = CONFIG['secret']
+  PASSWORD = CONFIG['password']
 
   class Client
     def initialize
-      if APIKEY.nil?
+      if APIKEY.nil? && PASSWORD.nil?
         puts 'Save below parameters in into ~/.pit/default.yaml'
         puts
+        puts '# OAuth version'
         puts 'twitter_api: '
         puts "  apikey: (Your API Key)"
         puts "  secret: (Your API Secret)"
+        puts
+        puts '# Basic Authentication version'
+        puts 'twitter_api: '
+        puts "  screen_name: (Your Screen Name)"
+        puts "  password: (Your Password)"
         raise
       end
       @oauth = Rubytter::OAuth.new(APIKEY, SECRET)
@@ -20,8 +27,15 @@ module LoveZkn
 
     def login
       oauth_token = CONFIG['oauth_token']
+      screen_name = CONFIG['screen_name']
+      options = {
+        :host => CONFIG['host'],
+        :path_prefix => CONFIG['path_prefix'],
+      }
       access_token = nil
-      if oauth_token.nil?
+      if PASSWORD
+        @client = Rubytter.new(screen_name, PASSWORD, options)
+      elsif oauth_token.nil?
         request_token = @oauth.get_request_token
         puts "Access here: #{request_token.authorize_url}"
         puts 'and...'
@@ -41,7 +55,6 @@ module LoveZkn
       else
         oauth_token_secret = CONFIG['oauth_token_secret']
         user_id = CONFIG['user_id']
-        screen_name = CONFIG['screen_name']
         consumer = @oauth.create_consumer
         access_token = OAuth::AccessToken.new(consumer, oauth_token,
             oauth_token_secret)
@@ -55,8 +68,10 @@ module LoveZkn
         access_token.params["oauth_token_secret"] = oauth_token_secret
       end
       @user_id = user_id
-      @client = OAuthRubytter.new(access_token)
+      @screen_name = screen_name
+      @client = OAuthRubytter.new(access_token, options) if access_token
+      @client
     end
-    attr_reader :user_id
+    attr_reader :user_id, :screen_name
   end
 end
