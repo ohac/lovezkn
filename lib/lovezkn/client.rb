@@ -30,6 +30,7 @@ module LoveZkn
       screen_name = CONFIG['screen_name']
       options = {
         :host => CONFIG['host'],
+        :port => CONFIG['port'],
         :path_prefix => CONFIG['path_prefix'],
       }
       access_token = nil
