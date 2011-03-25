@@ -30,6 +30,9 @@ Choice.options do
   option :replies do
     short '-r'
   end
+  option :stdin do
+    short '-s'
+  end
 end
 
 def timeline_to_textlines(tl)
@@ -70,6 +73,15 @@ elsif c.replies
   puts timeline_to_textlines(rawclient.replies).join("\n\n")
 elsif c.public
   puts timeline_to_textlines(rawclient.public_timeline).join("\n\n")
+elsif c.stdin
+  begin
+    loop do
+      tweet = STDIN.readline.chomp
+      break if tweet == ':q'
+      rawclient.update(tweet)
+    end
+  rescue EOFError
+  end
 elsif ARGV[0].nil?
   puts timeline_to_textlines(rawclient.home_timeline).join("\n\n")
 else
